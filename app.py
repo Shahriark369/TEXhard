@@ -5,6 +5,11 @@ import os
 from PIL import Image
 import io
 
+st.set_page_config(
+    page_title="⚡TEXhard drop the question",
+    page_icon="💡"
+)
+
 # MongoDB Setup (replace with your URI)
 MONGO_URI = st.secrets["mongo"]["uri"] 
 client = MongoClient(MONGO_URI)
