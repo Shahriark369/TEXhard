@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # MongoDB Setup (replace with your URI)
-MONGO_URI = st.secrets["mongo"]["uri"] 
+MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 db = client["notification_db"]
 collection = db["uploads"]
