@@ -6,8 +6,8 @@ from PIL import Image
 import io
 
 st.set_page_config(
-    page_title="⚡TEXhard drop the question",
-    page_icon="💡"
+    page_title="⚡TEXhard drop the question💡",
+    page_icon="🧠"
 )
 
 # MongoDB Setup (replace with your URI)
