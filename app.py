@@ -3,78 +3,106 @@ from pymongo import MongoClient
 from datetime import datetime
 import os
 from PIL import Image
-import io
 
+# --- Page config ---
 st.set_page_config(
     page_title="⚡TEXhard drop the question💡",
     page_icon="🧠"
 )
 
-# MongoDB Setup (replace with your URI)
+# --- MongoDB setup ---
 MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 db = client["notification_db"]
 collection = db["uploads"]
 
-# Ensure uploads folder exists
+# --- Ensure uploads folder exists ---
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
+# --- Title ---
 st.title("⚡TEXhard🧠 তোমার সাথে হোক আমাদেরও রিভিশন💡, এডুকেশনাল ছবি ছাড়া অন্য কোনো ছবি দিবে না প্লিজ")
 
-# Input form
+# --- Get subject folders ---
+subject_folders = sorted([f for f in os.listdir("uploads") if os.path.isdir(os.path.join("uploads", f))])
+
+# --- Upload Form ---
 with st.form("upload_form"):
     name = st.text_input("Enter your name")
+
+    # Predefined list of subjects
+    predefined_subjects = ["Phy.", "Chem.", "Bio.", "HM", "Bang.", "ICT", "Eng."]
+
+    # Use predefined subjects for selection
+    subject = st.selectbox("Select subject", options=predefined_subjects)
+    
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
     submit = st.form_submit_button("Submit")
 
     if submit:
-        if not name or not uploaded_file:
-            st.error("Please enter your name and upload an image.")
+        if not name or not subject or not uploaded_file:
+            st.error("❌ Please fill out all fields and upload an image.")
         else:
-            # Save image to 'uploads/' folder
+            # Create folder if not exists for the selected subject
+            subject_path = os.path.join("uploads", subject)
+            os.makedirs(subject_path, exist_ok=True)
+
+            # Save image with a unique timestamp filename
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{name}_{timestamp}.png"
-            filepath = os.path.join("uploads", filename)
+            filepath = os.path.join(subject_path, filename)
 
             image = Image.open(uploaded_file)
             image.save(filepath)
 
-            # Insert into MongoDB
+            # Insert metadata into MongoDB
             doc = {
                 "name": name,
+                "subject": subject,
                 "filename": filename,
                 "timestamp": datetime.now()
             }
             collection.insert_one(doc)
 
-            st.success("Image uploaded successfully!")
+            st.success("✅ Image uploaded successfully!")
 
-# Display all uploaded images
-st.subheader("Uploaded Images:")
-docs = collection.find().sort("timestamp", -1)
-for doc in docs:
-    st.markdown(f"**{doc['name']}** uploaded:")
-    img_path = os.path.join("uploads", doc['filename'])
-    if os.path.exists(img_path):
-        st.image(img_path, width=300)
-
-import time
-
-# Polling interval (seconds)
-POLL_INTERVAL = 5  
-
-# Initialize session state
-if 'last_checked' not in st.session_state:
+# --- Notification Check ---
+if "last_checked" not in st.session_state:
     st.session_state.last_checked = datetime.now()
 
-if 'notified' not in st.session_state:
+if "notified" not in st.session_state:
     st.session_state.notified = False
 
-# Check if a new image was added
 latest_upload = collection.find_one(sort=[("timestamp", -1)])
 if latest_upload and latest_upload["timestamp"] > st.session_state.last_checked:
     if not st.session_state.notified:
         st.toast("🔔 Someone just uploaded a new image!")
         st.session_state.notified = True
         st.session_state.last_checked = latest_upload["timestamp"]
+
+# --- Subject Selection Interface (NOW BELOW UPLOAD) ---
+st.markdown("---")
+st.markdown("### 📚 Choose a Subject to View Questions:")
+
+if subject_folders:
+    cols = st.columns(len(subject_folders))
+    for i, folder in enumerate(subject_folders):
+        if cols[i].button(folder):
+            st.session_state.selected_subject = folder
+else:
+    st.info("⚠️ এখনো কোনো সাবজেক্ট ফোল্ডার নেই। প্রথমে একটি প্রশ্ন আপলোড করুন।")
+
+# --- Maintain selection across reruns ---
+selected_subject = st.session_state.get('selected_subject', None)
+
+# --- Show Questions from Selected Subject ---
+if selected_subject:
+    st.subheader(f"🖼️ Uploaded Questions in: {selected_subject}")
+    docs = collection.find({"subject": selected_subject}).sort("timestamp", -1)
+    for doc in docs:
+        img_path = os.path.join("uploads", selected_subject, doc["filename"])
+        st.markdown(f"👤 **{doc['name']}**  \n🕒 {doc['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}")
+        if os.path.exists(img_path):
+            st.image(img_path, width=300)
+else:
+    st.info("👆 একটি সাবজেক্ট সিলেক্ট করুন প্রশ্ন দেখার জন্য।")
