@@ -20,7 +20,7 @@ collection = db["uploads"]
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
-st.title("TEXhard তোমার সাথে হোক আমাদেরও রিভিশন")
+st.title("⚡TEXhard🧠 তোমার সাথে হোক আমাদেরও রিভিশন💡")
 
 # Input form
 with st.form("upload_form"):
