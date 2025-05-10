@@ -23,7 +23,7 @@ if not os.path.exists("uploads"):
 # --- Title ---
 st.title("⚡TEXhard🧠")
 st.badge("তোমার সাথে হোক আমাদেরও রিভিশন💡", color="red")
-st.badge("এডুকেশনাল ছবি ছাড়া অন্য কোনো ছবি দিবে না প্লিজ", color="gray")
+st.badge("এডুকেশনাল ছবি ছাড়া অন্য কোনো ছবি দিবে না প্লিজ", color="green")
 # --- Get subject folders ---
 subject_folders = sorted([f for f in os.listdir("uploads") if os.path.isdir(os.path.join("uploads", f))])
 
