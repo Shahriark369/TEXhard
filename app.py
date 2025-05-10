@@ -129,4 +129,4 @@ if selected_subject:
             if os.path.exists(audio_path):
                 st.audio(audio_path)
 else:
-    st.info("👆")
+    st.info("")
