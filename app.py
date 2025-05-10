@@ -49,13 +49,20 @@ with st.form("upload_form"):
             subject_path = os.path.join("uploads", subject)
             os.makedirs(subject_path, exist_ok=True)
 
-            # Save image
+            # Save image with original quality
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{name}_{timestamp}.png"
             filepath = os.path.join(subject_path, filename)
 
             image = Image.open(uploaded_file)
-            image.save(filepath)
+
+            if uploaded_file.type == "image/jpeg":
+                image = image.convert("RGB")
+                image.save(filepath, format="JPEG", quality=100)
+            elif uploaded_file.type == "image/png":
+                image.save(filepath, format="PNG", compress_level=0)
+            else:
+                image.save(filepath)
 
             # Save audio if uploaded
             audio_filename = None
