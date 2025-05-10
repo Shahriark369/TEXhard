@@ -21,7 +21,8 @@ if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
 # --- Title ---
-st.title("⚡TEXhard🧠 তোমার সাথে হোক আমাদেরও রিভিশন💡")
+st.title("⚡TEXhard🧠")
+st.badge("তোমার সাথে হোক আমাদেরও রিভিশন💡", color="red")
 st.badge("এডুকেশনাল ছবি ছাড়া অন্য কোনো ছবি দিবে না প্লিজ", color="gray")
 # --- Get subject folders ---
 subject_folders = sorted([f for f in os.listdir("uploads") if os.path.isdir(os.path.join("uploads", f))])
@@ -128,4 +129,4 @@ if selected_subject:
             if os.path.exists(audio_path):
                 st.audio(audio_path)
 else:
-    st.info("👆 একটি সাবজেক্ট সিলেক্ট করুন প্রশ্ন দেখার জন্য।")
+    st.info("👆")
