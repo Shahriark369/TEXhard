@@ -32,22 +32,23 @@ with st.form("upload_form"):
 
     # Predefined list of subjects
     predefined_subjects = ["Phy.", "Chem.", "Bio.", "HM", "Bang.", "ICT", "Eng."]
-
-    # Use predefined subjects for selection
     subject = st.selectbox("Select subject", options=predefined_subjects)
-    
+
     uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    explanation = st.text_area("Add a text explanation (optional)")
+    audio_file = st.file_uploader("Optional audio explanation (MP3/WAV)", type=["mp3", "wav"])
+
     submit = st.form_submit_button("Submit")
 
     if submit:
         if not name or not subject or not uploaded_file:
-            st.error("❌ Please fill out all fields and upload an image.")
+            st.error("❌ Please fill out all required fields and upload an image.")
         else:
             # Create folder if not exists for the selected subject
             subject_path = os.path.join("uploads", subject)
             os.makedirs(subject_path, exist_ok=True)
 
-            # Save image with a unique timestamp filename
+            # Save image
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{name}_{timestamp}.png"
             filepath = os.path.join(subject_path, filename)
@@ -55,16 +56,27 @@ with st.form("upload_form"):
             image = Image.open(uploaded_file)
             image.save(filepath)
 
+            # Save audio if uploaded
+            audio_filename = None
+            if audio_file:
+                audio_ext = audio_file.name.split('.')[-1]
+                audio_filename = f"{name}_{timestamp}_audio.{audio_ext}"
+                audio_path = os.path.join(subject_path, audio_filename)
+                with open(audio_path, "wb") as f:
+                    f.write(audio_file.read())
+
             # Insert metadata into MongoDB
             doc = {
                 "name": name,
                 "subject": subject,
                 "filename": filename,
+                "explanation": explanation.strip(),
+                "audio_filename": audio_filename,
                 "timestamp": datetime.now()
             }
             collection.insert_one(doc)
 
-            st.success("✅ Image uploaded successfully!")
+            st.success("✅ Image and info uploaded successfully!")
 
 # --- Notification Check ---
 if "last_checked" not in st.session_state:
@@ -80,7 +92,7 @@ if latest_upload and latest_upload["timestamp"] > st.session_state.last_checked:
         st.session_state.notified = True
         st.session_state.last_checked = latest_upload["timestamp"]
 
-# --- Subject Selection Interface (NOW BELOW UPLOAD) ---
+# --- Subject Selection Interface ---
 st.markdown("---")
 st.markdown("### 📚 Choose a Subject to View Questions:")
 
@@ -102,7 +114,18 @@ if selected_subject:
     for doc in docs:
         img_path = os.path.join("uploads", selected_subject, doc["filename"])
         st.markdown(f"👤 **{doc['name']}**  \n🕒 {doc['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}")
+
         if os.path.exists(img_path):
             st.image(img_path, width=300)
+
+        # Show explanation if available
+        if doc.get("explanation"):
+            st.markdown(f"📝 **Explanation:** {doc['explanation']}")
+
+        # Show audio if available
+        if doc.get("audio_filename"):
+            audio_path = os.path.join("uploads", selected_subject, doc["audio_filename"])
+            if os.path.exists(audio_path):
+                st.audio(audio_path)
 else:
     st.info("👆 একটি সাবজেক্ট সিলেক্ট করুন প্রশ্ন দেখার জন্য।")
